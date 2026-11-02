@@ -1,0 +1,190 @@
+{
+  "name": "HR Buddy - ChocolaTech (Alura Agente IA)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "id": "node-telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [220, 300],
+      "webhookId": "hr-buddy-telegram-webhook",
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-cred-id",
+          "name": "Telegram Bot ChocolaTech"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=Eres el HR Buddy, asistente virtual de RR. HH. de ChocolaTech.\n\nREGLAS OBLIGATORIAS:\n1. Responde siempre en español con tono cordial y profesional.\n2. Responde SOLO dudas relacionadas con RR. HH. Si el usuario pregunta cosas ajenas (cocina, deportes, política, código general), rechaza cortésmente explicando que solo atiendes temas de RR. HH. de ChocolaTech.\n3. IDENTIFICACIÓN DEL EMPLEADO:\n   - Si el usuario no ha dicho quién es, pregúntale su nombre completo en la primera respuesta.\n   - Usa la herramienta MySQL para buscar en la tabla de empleados usando SIEMPRE el NOMBRE COMPLETO informado por el usuario.\n4. MANEJO DE DATOS:\n   - Si el empleado se encuentra: utiliza sus saldos de vacaciones y banco de horas para personalizar la respuesta.\n   - Si no se encuentra: no inventes datos personales. Responde solo con base en las políticas generales de RR. HH. del almacén vectorial (RAG).\n5. Usa la base de conocimientos documental para dudas generales de la compañía."
+        }
+      },
+      "id": "node-ai-agent",
+      "name": "AI Agent (HR Buddy)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "node-openai-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [420, 520],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-cred-id",
+          "name": "OpenAI ChocolaTech"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "contextWindowLength": 10
+      },
+      "id": "node-window-memory",
+      "name": "Window Buffer Memory (Telegram ID)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [540, 520]
+    },
+    {
+      "parameters": {
+        "name": "consultar_empleado_mysql",
+        "description": "Busca la ficha de un empleado en la base de datos MySQL de ChocolaTech usando su nombre completo. Retorna puesto, departamento, saldo_vacaciones, banco_horas y modalidad.",
+        "operation": "executeQuery",
+        "query": "=SELECT nombre, email, puesto, departamento, fecha_ingreso, saldo_vacaciones, banco_horas, modalidad FROM empleados WHERE LOWER(nombre) LIKE LOWER('%' || /*$fromAI('nombre_completo', 'Nombre completo del empleado informado por el usuario en la conversación')*/ '' || '%') LIMIT 1;"
+      },
+      "id": "node-tool-mysql",
+      "name": "MySQL Tool (Empleados $fromAI)",
+      "type": "@n8n/n8n-nodes-langchain.toolCustom",
+      "typeVersion": 1,
+      "position": [680, 520],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-cred-id",
+          "name": "MySQL ChocolaTech DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "consultar_politicas_rrhh",
+        "description": "Consulta las políticas corporativas generales de Recursos Humanos de ChocolaTech (Vacaciones, Banco de Horas, Modalidades de Trabajo, Beneficios y Código Ético) en el almacén vectorial RAG."
+      },
+      "id": "node-tool-vector-rag",
+      "name": "Vector Store Tool (RAG Políticas)",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [820, 520]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-send-telegram",
+      "name": "Telegram - Responder al Usuario",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [860, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-cred-id",
+          "name": "Telegram Bot ChocolaTech"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (HR Buddy)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (HR Buddy)": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Responder al Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent (HR Buddy)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory (Telegram ID)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent (HR Buddy)",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Tool (Empleados $fromAI)": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (HR Buddy)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool (RAG Políticas)": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent (HR Buddy)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

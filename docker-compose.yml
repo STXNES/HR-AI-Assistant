@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Base de Datos MySQL de ChocolaTech
+  mysql:
+    image: mysql:8.0
+    container_name: chocolatech_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: chocolatech123
+      MYSQL_DATABASE: chocolatech
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./hr_buddy_chocolatech/database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pchocolatech123"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Aplicación HR Buddy (FastAPI + Agent + Telegram Webhook)
+  hr-buddy-app:
+    build: .
+    container_name: chocolatech_hr_buddy
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_TYPE=mysql
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=chocolatech123
+      - MYSQL_DATABASE=chocolatech
+      - PORT=8000
+      - HOST=0.0.0.0
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # n8n Automation Engine (Opcional para ejecutar los flujos visuales)
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: chocolatech_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Mexico_City
+    volumes:
+      - n8n_data:/home/node/.n8n
+    profiles:
+      - automation
+
+volumes:
+  mysql_data:
+  n8n_data:

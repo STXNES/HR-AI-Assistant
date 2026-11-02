@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Buddy · ChocolaTech (Alura IA)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">🍫</div>
+        <div>
+          <h1 class="brand-title">ChocolaTech</h1>
+          <p class="brand-subtitle">HR Buddy · Agente IA</p>
+        </div>
+      </div>
+
+      <div class="session-box">
+        <span class="session-label">SESIÓN ACTIVA</span>
+        <div class="session-id-row">
+          <span class="status-dot"></span>
+          <span id="sessionIdDisplay" class="session-id">web-session-1</span>
+        </div>
+        <button id="btnResetSession" class="btn-secondary" title="Reiniciar memoria de conversación">
+          🔄 Reiniciar Sesión
+        </button>
+      </div>
+
+      <div class="section-title">COLABORADORES DE PRUEBA</div>
+      <div class="employee-shortcuts">
+        <button class="emp-chip" data-name="Juan Silva">
+          <span class="emp-avatar">JS</span>
+          <div class="emp-info">
+            <span class="emp-name">Juan Silva</span>
+            <span class="emp-role">Ing. Software · 20d vac</span>
+          </div>
+        </button>
+        <button class="emp-chip" data-name="María Gonzalez">
+          <span class="emp-avatar">MG</span>
+          <div class="emp-info">
+            <span class="emp-name">María Gonzalez</span>
+            <span class="emp-role">RR. HH. · 12.5h banco</span>
+          </div>
+        </button>
+        <button class="emp-chip" data-name="Eric Monné">
+          <span class="emp-avatar">EM</span>
+          <div class="emp-info">
+            <span class="emp-name">Eric Monné</span>
+            <span class="emp-role">Instructor · 25d vac</span>
+          </div>
+        </button>
+        <button class="emp-chip" data-name="Ana Lima">
+          <span class="emp-avatar">AL</span>
+          <div class="emp-info">
+            <span class="emp-name">Ana Lima</span>
+            <span class="emp-role">Marketing · Remoto (-4h)</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="section-title">POLÍTICAS RAG ACTIVAS</div>
+      <div class="policy-list">
+        <div class="policy-item">🌴 Vacaciones y Tiempo Libre</div>
+        <div class="policy-item">⏱️ Banco de Horas y Compensatorios</div>
+        <div class="policy-item">💻 Modalidades de Trabajo</div>
+        <div class="policy-item">🎁 Beneficios ChocolaTech</div>
+        <div class="policy-item">⚖️ Código de Ética y Conducta</div>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat-container">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="badge-agent">🤖 Agente Autónomo</span>
+          <span class="topbar-title">HR Buddy · Asistente de Recursos Humanos</span>
+        </div>
+        <div class="topbar-right">
+          <div class="guardrail-pill" title="Guardrails activos de dominio y seguridad">
+            <span class="shield-icon">🛡️</span> Guardrails Activos
+          </div>
+          <div class="db-pill" id="dbStatusPill">
+            <span class="db-icon">🗄️</span> MySQL Conectado
+          </div>
+        </div>
+      </header>
+
+      <!-- Message Feed -->
+      <section id="chatFeed" class="chat-feed">
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+          <div class="welcome-badge">🍫 ChocolaTech AI</div>
+          <h2>¡Bienvenido a HR Buddy!</h2>
+          <p>
+            Soy tu asistente corporativo de Recursos Humanos. Puedo verificar tus saldos en la base de datos de empleados
+            o resolver dudas sobre nuestras políticas internas mediante RAG.
+          </p>
+          <div class="suggestion-grid">
+            <button class="suggestion-btn" data-prompt="Hola, soy Juan Silva. ¿Cuántos días de vacaciones me quedan?">
+              🌴 <strong>Juan Silva:</strong> ¿Mis vacaciones?
+            </button>
+            <button class="suggestion-btn" data-prompt="Hola, soy María Gonzalez. ¿Cuál es mi balance en el banco de horas?">
+              ⏱️ <strong>María Gonzalez:</strong> ¿Mi banco de horas?
+            </button>
+            <button class="suggestion-btn" data-prompt="¿Cuáles son las modalidades de trabajo en ChocolaTech?">
+              💻 <strong>Políticas:</strong> Modalidades de trabajo
+            </button>
+            <button class="suggestion-btn" data-prompt="¿Qué beneficios tiene ChocolaTech y qué es la ChocoBox?">
+              🎁 <strong>Beneficios:</strong> ChocoBox y SGMM
+            </button>
+            <button class="suggestion-btn" data-prompt="¿Cómo hago una pizza cuatro quesos?">
+              🚫 <strong>Prueba de Guardrail:</strong> Pregunta no-RRHH
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Input Area -->
+      <footer class="chat-input-bar">
+        <div class="input-wrapper">
+          <textarea id="userInput" placeholder="Escribe tu mensaje o consulta a HR Buddy..." rows="1"></textarea>
+          <button id="btnSend" class="btn-send" title="Enviar mensaje">
+            <span>Enviar</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-hint">
+          HR Buddy responde únicamente consultas laborales de ChocolaTech protegidas por guardrails corporativos.
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
